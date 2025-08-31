@@ -1,0 +1,22 @@
+{
+  "name": "Cosmic Game Arena",
+  "short_name": "Cosmic Game Arena",
+  "description": "Aplikasi timer untuk Cosmic Game Arena.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/CosmicGameArena/photo/cosmic.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/CosmicGameArena/photo/cosmic.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ]
+}
+

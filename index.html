@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COSMIC GAME ARENA</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 1. MEMUAT LIBRARY SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -14,64 +16,33 @@
         .stopwatch-display, .session-card h3, #invoice-content h2, .running-cost {
             font-family: 'Roboto Mono', monospace;
         }
-        /* Style untuk modal invoice */
         #invoice-modal { display: none; }
         
-        /* Style untuk cetak struk 58mm */
         @media print {
-            body * { visibility: hidden; } /* Sembunyikan semua elemen di halaman */
-
-            #invoice-content, #invoice-content * { visibility: visible; } /* Tampilkan hanya konten invoice */
+            body * { visibility: hidden; }
+            #invoice-content, #invoice-content * { visibility: visible; }
             #invoice-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm;
-                padding: 3mm;
-                font-size: 9pt;
-                color: black;
-                font-family: 'Courier New', Courier, monospace; /* Font khas struk */
+                position: absolute; left: 0; top: 0; width: 58mm; padding: 3mm;
+                font-size: 9pt; color: black; font-family: 'Courier New', Courier, monospace;
                 box-sizing: border-box;
             }
-            
-            /* Tata letak header struk */
-            #invoice-content .print-header {
-                text-align: center;
-                margin-bottom: 10px;
-            }
+            #invoice-content .print-header { text-align: center; margin-bottom: 10px; }
             #invoice-content .print-header .font-semibold { font-size: 11pt; font-weight: bold; }
             #invoice-content .print-header .text-sm { font-size: 8pt; }
-            
-            /* Sembunyikan elemen yang tidak perlu dicetak */
-            #invoice-content h2, #invoice-content #invoice-number, #invoice-content .text-gray-500, #invoice-content thead {
-                display: none;
-            }
-
-            /* Info pelanggan */
+            #invoice-content h2, #invoice-content #invoice-number, #invoice-content .text-gray-500, #invoice-content thead { display: none; }
             #invoice-content .mb-8 { margin-bottom: 10px; }
             #invoice-content #invoice-customer-name { font-size: 9pt; }
-            
-            /* Styling tabel item */
             #invoice-content table { width: 100%; border-collapse: collapse; margin-top: 5px; }
             #invoice-content table tr { border-top: 1px dashed #000; }
             #invoice-content table tr:first-child { border-top: none; }
             #invoice-content table td { padding: 4px 0; }
             #invoice-content table td:last-child { text-align: right; }
-
-            /* Total section */
             #invoice-content .flex.justify-end { margin-top: 10px; }
             #invoice-content .w-full.max-w-xs { max-width: 100%; }
-            #invoice-content .flex.justify-between.text-gray-700:not(.font-bold) { display: none; } /* Sembunyikan subtotal */
+            #invoice-content .flex.justify-between.text-gray-700:not(.font-bold) { display: none; }
             #invoice-content .flex.justify-between { padding-top: 5px; border-top: 1px solid #000; }
             #invoice-content .font-bold.text-xl { font-size: 11pt; }
-
-            /* Footer struk */
-            #invoice-content::after {
-                content: "Terima Kasih!";
-                display: block;
-                text-align: center;
-                margin-top: 15px;
-            }
+            #invoice-content::after { content: "Terima Kasih!"; display: block; text-align: center; margin-top: 15px; }
             .no-print { display: none; }
         }
     </style>
@@ -110,7 +81,6 @@
              <div class="flex justify-between items-start mb-6 print-header">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800">INVOICE</h2>
-                    <p id="invoice-number" class="text-gray-500">Nota #12345</p>
                 </div>
                 <div class="text-right">
                     <p class="font-semibold">COSMIC GAME ARENA</p>
@@ -136,13 +106,22 @@
                 </div>
             </div>
             <div class="mt-12 text-center no-print space-x-4">
-                <button id="print-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">Cetak / Simpan PDF</button>
+                <button id="print-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">Cetak & Simpan</button>
                 <button id="close-invoice-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg">Tutup</button>
             </div>
         </div>
     </div>
 
     <script>
+    // --- 2. SETUP KONEKSI SUPABASE ---
+    // Kunci sudah diisi dari screenshot Anda.
+    const SUPABASE_URL = 'https://wzkfmsgvjmfkfvotgvp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6a2Ztc2d2am1ma2Z2b3RndnAiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcyNTA3MDIzOCwiZXhwIjoyMDQwNjQ2MjM4fQ.a-5BVi9PPRo40VqS38tKqLq-8T_f_a9E-z3tZ6_Hl8A';
+
+    const { createClient } = supabase; // Koreksi: Destructure createClient dari object supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Koreksi: Gunakan nama variabel yang berbeda
+    // ------------------------------------
+
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('add-session-form');
         const sessionsContainer = document.getElementById('sessions-container');
@@ -154,19 +133,11 @@
         const addSessionCard = (name, consoleType, ratePerHour) => {
             const id = `session-${Date.now()}`;
             const startTime = Date.now();
-
             const card = document.createElement('div');
             card.id = id;
             card.className = "session-card bg-gray-800 p-5 rounded-2xl shadow-lg border border-gray-700 flex flex-col transition-all duration-300";
             
-            const sessionData = {
-                id,
-                name,
-                startTime,
-                consoleType,
-                ratePerMinute: ratePerHour / 60,
-                interval: setInterval(() => updateSession(id), 1000)
-            };
+            const sessionData = { id, name, startTime, consoleType, ratePerMinute: ratePerHour / 60, interval: setInterval(() => updateSession(id), 1000) };
             sessions.push(sessionData);
 
             card.innerHTML = `
@@ -180,7 +151,6 @@
                 </div>
             `;
             sessionsContainer.appendChild(card);
-            
             card.querySelector('.stop-btn').addEventListener('click', () => stopSession(id));
         };
         
@@ -188,15 +158,12 @@
             const session = sessions.find(s => s.id === id);
             const card = document.getElementById(id);
             if (!session || !card) return;
-
             const elapsedTime = Date.now() - session.startTime;
             const elapsedSeconds = Math.floor(elapsedTime / 1000);
             const hours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
             const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
             const seconds = String(elapsedSeconds % 60).padStart(2, '0');
-            
             card.querySelector('.stopwatch-display').textContent = `${hours}:${minutes}:${seconds}`;
-
             const elapsedMinutes = elapsedTime / (1000 * 60);
             const currentCost = elapsedMinutes * session.ratePerMinute;
             card.querySelector('.running-cost').textContent = formatRupiah(currentCost);
@@ -205,25 +172,30 @@
         const stopSession = (id) => {
             const sessionIndex = sessions.findIndex(s => s.id === id);
             if (sessionIndex === -1) return;
-
             const session = sessions[sessionIndex];
             clearInterval(session.interval);
-
             const finalElapsedTime = Date.now() - session.startTime;
-            const finalMinutes = Math.ceil(finalElapsedTime / (1000 * 60)); // Bulatkan ke menit atas
+            const finalMinutes = Math.ceil(finalElapsedTime / (1000 * 60));
             const finalCost = finalMinutes * session.ratePerMinute;
             
             showInvoice(session.name, session.consoleType, finalMinutes, finalCost);
+
+            // Simpan data dasar untuk dikirim ke DB nanti
+            const transactionData = {
+                customer_name: session.name,
+                console_type: session.consoleType,
+                duration_minutes: finalMinutes,
+                rental_cost: finalCost
+            };
+            invoiceModal.dataset.transaction = JSON.stringify(transactionData);
 
             document.getElementById(id).remove();
             sessions.splice(sessionIndex, 1);
         };
 
         const showInvoice = (name, consoleType, duration, cost) => {
-            document.getElementById('invoice-number').textContent = `Nota #${Date.now().toString().slice(-6)}`;
             document.getElementById('invoice-date').textContent = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
             document.getElementById('invoice-customer-name').textContent = name;
-
             const itemsBody = document.getElementById('invoice-items-body');
             itemsBody.innerHTML = `
                 <tr data-price="${cost}">
@@ -231,7 +203,6 @@
                     <td class="text-right py-2">${formatRupiah(cost)}</td>
                 </tr>
             `;
-            
             updateInvoiceTotal();
             invoiceModal.style.display = 'flex';
         };
@@ -252,11 +223,8 @@
         window.updateInvoiceTotal = () => {
             let subtotal = 0;
             document.querySelectorAll('#invoice-items-body tr').forEach(row => {
-                if (row.dataset.price) {
-                    subtotal += parseFloat(row.dataset.price);
-                } else {
-                    subtotal += parseFloat(row.querySelector('.item-price')?.value) || 0;
-                }
+                if (row.dataset.price) subtotal += parseFloat(row.dataset.price);
+                else subtotal += parseFloat(row.querySelector('.item-price')?.value) || 0;
             });
             document.getElementById('invoice-subtotal').textContent = formatRupiah(subtotal);
             document.getElementById('invoice-total').textContent = formatRupiah(subtotal);
@@ -267,7 +235,6 @@
             const name = document.getElementById('session-name').value.trim();
             const consoleSelect = document.getElementById('console-type');
             const selectedOption = consoleSelect.options[consoleSelect.selectedIndex];
-            
             if (name && selectedOption.value) {
                 const consoleType = selectedOption.value;
                 const rate = parseFloat(selectedOption.dataset.rate);
@@ -279,16 +246,40 @@
 
         document.getElementById('add-item-btn').addEventListener('click', addInvoiceItem);
         
-        document.getElementById('print-invoice-btn').addEventListener('click', () => {
-            // Ubah item tambahan dari input menjadi teks biasa sebelum mencetak
+        // --- 3. FUNGSI UNTUK SIMPAN KE DB & CETAK ---
+        document.getElementById('print-invoice-btn').addEventListener('click', async () => {
+            let transactionData = JSON.parse(invoiceModal.dataset.transaction || '{}');
+            let additionalItems = [];
+            let totalCost = transactionData.rental_cost || 0;
+
             document.querySelectorAll('#invoice-items-body .item-row').forEach(row => {
                 const name = row.querySelector('.item-name').value || 'Item Tambahan';
                 const price = parseFloat(row.querySelector('.item-price').value) || 0;
-                
-                row.innerHTML = `
-                    <td class="py-2">${name}</td>
-                    <td class="text-right py-2">${formatRupiah(price)}</td>
-                `;
+                additionalItems.push({ name, price });
+                totalCost += price;
+            });
+
+            transactionData.additional_items = additionalItems;
+            transactionData.total_cost = totalCost;
+
+            // Kirim data ke Supabase
+            const { data, error } = await db // Koreksi: gunakan variabel 'db'
+                .from('transactions') // Pastikan nama tabel sama
+                .insert([transactionData]);
+
+            if (error) {
+                console.error('Error saving to Supabase:', error);
+                alert('Gagal menyimpan riwayat ke database. Cek console untuk error.');
+            } else {
+                console.log('Transaction saved successfully:', data);
+                alert('Riwayat transaksi berhasil disimpan!');
+            }
+
+            // Siapkan untuk dicetak (logika yang sama seperti sebelumnya)
+            document.querySelectorAll('#invoice-items-body .item-row').forEach(row => {
+                const name = row.querySelector('.item-name').value || 'Item Tambahan';
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                row.innerHTML = `<td class="py-2">${name}</td><td class="text-right py-2">${formatRupiah(price)}</td>`;
             });
             window.print();
         });

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kasir & Stopwatch Rental PS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        .stopwatch-display, .session-card h3, #invoice-content h2, .running-cost {
+            font-family: 'Roboto Mono', monospace;
+        }
+        /* Style untuk modal invoice */
+        #invoice-modal { display: none; }
+        /* Style untuk cetak */
+        @media print {
+            body * { visibility: hidden; }
+            #invoice-content, #invoice-content * { visibility: visible; }
+            #invoice-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                color: black;
+            }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white p-4 sm:p-6 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8 no-print">
+            <h1 class="text-3xl sm:text-4xl font-bold text-cyan-400 tracking-wider">🎮 COSMIC GAME ARENA</h1>
+        </header>
+
+        <div class="max-w-lg mx-auto bg-gray-800 p-6 rounded-2xl shadow-lg mb-10 border border-gray-700 no-print">
+            <form id="add-session-form" class="space-y-4">
+                <input type="text" id="session-name" placeholder="Nama / Nomor TV (Contoh: TV 01)" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-3 focus:ring-cyan-500 focus:border-cyan-500 transition">
+                <div>
+                    <label for="console-type" class="block mb-2 text-sm font-medium text-gray-300">Jenis PS</label>
+                    <select id="console-type" required class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-3 focus:ring-cyan-500 focus:border-cyan-500 transition">
+                        <option value="" disabled selected>-- PILIH JENIS PS --</option>
+                        <option value="PS3" data-rate="8000">PS3 (Rp 8.000/jam)</option>
+                        <option value="PS4" data-rate="10000">PS4 (Rp 10.000/jam)</option>
+                        <option value="PS5" data-rate="18000">PS5 (Rp 18.000/jam)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 active:scale-100">Mulai Sesi Baru</button>
+            </form>
+        </div>
+
+        <div id="sessions-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 no-print">
+            <!-- Kartu sesi akan ditambahkan di sini -->
+        </div>
+    </div>
+
+    <!-- Modal Invoice -->
+    <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4">
+        <div id="invoice-content" class="bg-white text-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto">
+             <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">INVOICE</h2>
+                    <p id="invoice-number" class="text-gray-500">Nota #12345</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">COSMIC GAME ARENA</p>
+                    <p class="text-sm text-gray-600">Jalan Kuala Mas Raya CB 35</p>
+                    <p id="invoice-date" class="text-sm text-gray-600">31 Agu 2025</p>
+                </div>
+            </div>
+            <div class="mb-8">
+                <p class="text-gray-500 mb-1">Penyewa:</p>
+                <p id="invoice-customer-name" class="font-bold text-lg">Nama Pelanggan</p>
+            </div>
+            <table class="w-full mb-8">
+                <thead>
+                    <tr class="border-b-2 border-gray-300"><th class="text-left py-2">Deskripsi</th><th class="text-right py-2">Jumlah</th></tr>
+                </thead>
+                <tbody id="invoice-items-body"></tbody>
+            </table>
+            <button id="add-item-btn" class="no-print mb-6 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded-lg">+ Tambah Item</button>
+            <div class="flex justify-end">
+                <div class="w-full max-w-xs">
+                    <div class="flex justify-between text-gray-700"><span>Subtotal</span><span id="invoice-subtotal">Rp 0</span></div>
+                    <div class="flex justify-between text-gray-700 font-bold text-xl mt-4 border-t-2 pt-2"><span>TOTAL</span><span id="invoice-total">Rp 0</span></div>
+                </div>
+            </div>
+            <div class="mt-12 text-center no-print space-x-4">
+                <button id="print-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">Cetak / Simpan PDF</button>
+                <button id="close-invoice-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('add-session-form');
+        const sessionsContainer = document.getElementById('sessions-container');
+        const invoiceModal = document.getElementById('invoice-modal');
+        let sessions = [];
+
+        const formatRupiah = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+
+        const addSessionCard = (name, consoleType, ratePerHour) => {
+            const id = `session-${Date.now()}`;
+            const startTime = Date.now();
+
+            const card = document.createElement('div');
+            card.id = id;
+            card.className = "session-card bg-gray-800 p-5 rounded-2xl shadow-lg border border-gray-700 flex flex-col transition-all duration-300";
+            
+            const sessionData = {
+                id,
+                name,
+                startTime,
+                consoleType,
+                ratePerMinute: ratePerHour / 60,
+                interval: setInterval(() => updateSession(id), 1000)
+            };
+            sessions.push(sessionData);
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-bold text-cyan-400 break-all pr-2">${name} <span class="text-sm font-normal text-gray-400">(${consoleType})</span></h3>
+                </div>
+                <div class="stopwatch-display text-5xl font-bold text-center my-2 text-white">00:00:00</div>
+                <div class="running-cost text-2xl font-bold text-center my-2 text-green-400">Rp 0</div>
+                <div class="flex justify-center mt-3">
+                    <button class="stop-btn bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg w-full">Stop & Bayar</button>
+                </div>
+            `;
+            sessionsContainer.appendChild(card);
+            
+            card.querySelector('.stop-btn').addEventListener('click', () => stopSession(id));
+        };
+        
+        const updateSession = (id) => {
+            const session = sessions.find(s => s.id === id);
+            const card = document.getElementById(id);
+            if (!session || !card) return;
+
+            const elapsedTime = Date.now() - session.startTime;
+            const elapsedSeconds = Math.floor(elapsedTime / 1000);
+            const hours = String(Math.floor(elapsedSeconds / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((elapsedSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(elapsedSeconds % 60).padStart(2, '0');
+            
+            card.querySelector('.stopwatch-display').textContent = `${hours}:${minutes}:${seconds}`;
+
+            const elapsedMinutes = elapsedTime / (1000 * 60);
+            const currentCost = elapsedMinutes * session.ratePerMinute;
+            card.querySelector('.running-cost').textContent = formatRupiah(currentCost);
+        };
+
+        const stopSession = (id) => {
+            const sessionIndex = sessions.findIndex(s => s.id === id);
+            if (sessionIndex === -1) return;
+
+            const session = sessions[sessionIndex];
+            clearInterval(session.interval);
+
+            const finalElapsedTime = Date.now() - session.startTime;
+            const finalMinutes = Math.ceil(finalElapsedTime / (1000 * 60)); // Bulatkan ke menit atas
+            const finalCost = finalMinutes * session.ratePerMinute;
+            
+            showInvoice(session.name, session.consoleType, finalMinutes, finalCost);
+
+            // Hapus kartu dan data sesi
+            document.getElementById(id).remove();
+            sessions.splice(sessionIndex, 1);
+        };
+
+        const showInvoice = (name, consoleType, duration, cost) => {
+            document.getElementById('invoice-number').textContent = `Nota #${Date.now().toString().slice(-6)}`;
+            document.getElementById('invoice-date').textContent = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            document.getElementById('invoice-customer-name').textContent = name;
+
+            const itemsBody = document.getElementById('invoice-items-body');
+            itemsBody.innerHTML = `
+                <tr data-price="${cost}">
+                    <td class="py-2">Sewa ${consoleType} (${duration} menit)</td>
+                    <td class="text-right py-2">${formatRupiah(cost)}</td>
+                </tr>
+            `;
+            
+            updateInvoiceTotal();
+            invoiceModal.style.display = 'flex';
+        };
+
+        const addInvoiceItem = () => {
+            const itemsBody = document.getElementById('invoice-items-body');
+            const row = document.createElement('tr');
+            row.className = "item-row";
+            row.innerHTML = `
+                <td class="py-2 pr-2"><input type="text" placeholder="Nama item" class="item-name w-full p-1 border rounded text-gray-800"></td>
+                <td class="text-right py-2"><input type="number" placeholder="0" class="item-price w-24 p-1 border rounded text-right text-gray-800"></td>
+                <td class="pl-2 no-print"><button class="text-red-500 font-bold" onclick="this.closest('tr').remove(); updateInvoiceTotal();">X</button></td>
+            `;
+            itemsBody.appendChild(row);
+            row.querySelector('.item-price').addEventListener('input', updateInvoiceTotal);
+        };
+
+        window.updateInvoiceTotal = () => {
+            let subtotal = 0;
+            document.querySelectorAll('#invoice-items-body tr').forEach(row => {
+                if (row.dataset.price) {
+                    subtotal += parseFloat(row.dataset.price);
+                } else {
+                    subtotal += parseFloat(row.querySelector('.item-price').value) || 0;
+                }
+            });
+            document.getElementById('invoice-subtotal').textContent = formatRupiah(subtotal);
+            document.getElementById('invoice-total').textContent = formatRupiah(subtotal);
+        };
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('session-name').value.trim();
+            const consoleSelect = document.getElementById('console-type');
+            const selectedOption = consoleSelect.options[consoleSelect.selectedIndex];
+            
+            if (name && selectedOption.value) {
+                const consoleType = selectedOption.value;
+                const rate = parseFloat(selectedOption.dataset.rate);
+                addSessionCard(name, consoleType, rate);
+                form.reset();
+                document.getElementById('session-name').focus();
+            } else { alert('Harap isi Nama dan pilih Jenis Konsol.'); }
+        });
+
+        document.getElementById('add-item-btn').addEventListener('click', addInvoiceItem);
+        document.getElementById('print-invoice-btn').addEventListener('click', () => window.print());
+        document.getElementById('close-invoice-btn').addEventListener('click', () => { invoiceModal.style.display = 'none'; });
+    });
+    </script>
+</body>
+</html>
+

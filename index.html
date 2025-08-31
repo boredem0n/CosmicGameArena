@@ -114,12 +114,11 @@
 
     <script>
     // --- 2. SETUP KONEKSI SUPABASE ---
-    // Kunci sudah diisi dari screenshot Anda.
     const SUPABASE_URL = 'https://wzkfmsgvjmfkfvotgvp.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6a2Ztc2d2am1ma2Z2b3RndnAiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcyNTA3MDIzOCwiZXhwIjoyMDQwNjQ2MjM4fQ.a-5BVi9PPRo40VqS38tKqLq-8T_f_a9E-z3tZ6_Hl8A';
 
-    const { createClient } = supabase; // Koreksi: Destructure createClient dari object supabase
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Koreksi: Gunakan nama variabel yang berbeda
+    const { createClient } = supabase;
+    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // ------------------------------------
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -246,9 +245,12 @@
 
         document.getElementById('add-item-btn').addEventListener('click', addInvoiceItem);
         
-        // --- 3. FUNGSI UNTUK SIMPAN KE DB & CETAK ---
+        // --- 3. FUNGSI UNTUK SIMPAN KE DB & CETAK (SUDAH DIPERBARUI) ---
         document.getElementById('print-invoice-btn').addEventListener('click', async () => {
+            // Ambil data dasar dari modal
             let transactionData = JSON.parse(invoiceModal.dataset.transaction || '{}');
+            
+            // Siapkan array untuk item tambahan & hitung total biaya akhir
             let additionalItems = [];
             let totalCost = transactionData.rental_cost || 0;
 
@@ -259,12 +261,13 @@
                 totalCost += price;
             });
 
+            // Lengkapi data transaksi
             transactionData.additional_items = additionalItems;
             transactionData.total_cost = totalCost;
 
-            // Kirim data ke Supabase
-            const { data, error } = await db // Koreksi: gunakan variabel 'db'
-                .from('transactions') // Pastikan nama tabel sama
+            // ---- KIRIM DATA KE SUPABASE ----
+            const { data, error } = await db
+                .from('transactions') // Pastikan nama tabel ini benar
                 .insert([transactionData]);
 
             if (error) {
@@ -274,6 +277,7 @@
                 console.log('Transaction saved successfully:', data);
                 alert('Riwayat transaksi berhasil disimpan!');
             }
+            // ---------------------------------
 
             // Siapkan untuk dicetak (logika yang sama seperti sebelumnya)
             document.querySelectorAll('#invoice-items-body .item-row').forEach(row => {

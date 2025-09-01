@@ -88,36 +88,36 @@
     <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4">
         <div id="invoice-content" class="bg-white text-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto">
              <div class="flex justify-between items-start mb-6 print-header">
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-800 font-monospace">INVOICE</h2>
-                </div>
-                <div class="text-right">
-                    <p class="font-semibold">COSMIC GAME ARENA</p>
-                    <p class="text-sm text-gray-600">JALAN KUALA MAS RAYA CB 35</p>
-                    <p id="invoice-date" class="text-sm text-gray-600"></p>
-                </div>
-            </div>
-            <div class="mb-8">
-                <p class="text-gray-500 mb-1">Tagihan untuk:</p>
-                <p id="invoice-customer-name" class="font-bold text-lg">Nama Pelanggan</p>
-            </div>
-            <table class="w-full mb-8">
-                <thead>
-                    <tr class="border-b-2 border-gray-300"><th class="text-left py-2">Deskripsi</th><th class="text-right py-2">Jumlah</th></tr>
-                </thead>
-                <tbody id="invoice-items-body"></tbody>
-            </table>
-            <button id="add-item-btn" class="no-print mb-6 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded-lg">+ Tambah Item</button>
-            <div class="flex justify-end">
-                <div class="w-full max-w-xs">
-                    <div class="flex justify-between text-gray-700"><span>Subtotal</span><span id="invoice-subtotal">Rp 0</span></div>
-                    <div class="flex justify-between text-gray-700 font-bold text-xl mt-4 border-t-2 pt-2"><span>TOTAL</span><span id="invoice-total">Rp 0</span></div>
-                </div>
-            </div>
-            <div class="mt-12 text-center no-print space-x-4">
-                <button id="print-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Cetak & Simpan</button>
-                <button id="close-invoice-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg">Tutup</button>
-            </div>
+                 <div>
+                     <h2 class="text-3xl font-bold text-gray-800 font-monospace">INVOICE</h2>
+                 </div>
+                 <div class="text-right">
+                     <p class="font-semibold">COSMIC GAME ARENA</p>
+                     <p class="text-sm text-gray-600">JALAN KUALA MAS RAYA CB 35</p>
+                     <p id="invoice-date" class="text-sm text-gray-600"></p>
+                 </div>
+             </div>
+             <div class="mb-8">
+                 <p class="text-gray-500 mb-1">Tagihan untuk:</p>
+                 <p id="invoice-customer-name" class="font-bold text-lg">Nama Pelanggan</p>
+             </div>
+             <table class="w-full mb-8">
+                 <thead>
+                     <tr class="border-b-2 border-gray-300"><th class="text-left py-2">Deskripsi</th><th class="text-right py-2">Jumlah</th></tr>
+                 </thead>
+                 <tbody id="invoice-items-body"></tbody>
+             </table>
+             <button id="add-item-btn" class="no-print mb-6 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-4 rounded-lg">+ Tambah Item</button>
+             <div class="flex justify-end">
+                 <div class="w-full max-w-xs">
+                     <div class="flex justify-between text-gray-700"><span>Subtotal</span><span id="invoice-subtotal">Rp 0</span></div>
+                     <div class="flex justify-between text-gray-700 font-bold text-xl mt-4 border-t-2 pt-2"><span>TOTAL</span><span id="invoice-total">Rp 0</span></div>
+                 </div>
+             </div>
+             <div class="mt-12 text-center no-print space-x-4">
+                 <button id="print-invoice-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Cetak & Simpan</button>
+                 <button id="close-invoice-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg">Tutup</button>
+             </div>
         </div>
     </div>
     
@@ -225,7 +225,8 @@
 
             const elapsedTimeMs = Date.now() - session.startTime;
             const elapsedSeconds = elapsedTimeMs / 1000;
-            const currentCost = (elapsedSeconds / 60) * session.ratePerMinute;
+            // MODIFIED LINE 1
+            const currentCost = 1000 + ((elapsedSeconds / 60) * session.ratePerMinute);
 
             card.querySelector('.stopwatch-display').textContent = formatTime(elapsedSeconds);
             card.querySelector('.running-cost').textContent = formatRupiah(currentCost);
@@ -239,7 +240,8 @@
 
             const finalElapsedTimeMs = Date.now() - session.startTime;
             const finalMinutes = Math.ceil(finalElapsedTimeMs / (1000 * 60));
-            const finalCost = finalMinutes * session.ratePerMinute;
+            // MODIFIED LINE 2
+            const finalCost = 1000 + (finalMinutes * session.ratePerMinute);
             
             showInvoice(session.name, session.consoleType, finalMinutes, finalCost);
             
